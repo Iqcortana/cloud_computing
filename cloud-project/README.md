@@ -156,3 +156,21 @@ Local: http://127.0.0.1:5173/
 ```
 
 Akses aplikasi di browser menggunakan URL yang diberikan (biasanya `http://127.0.0.1:5173/`).
+
+## 📂 Struktur Keseluruhan
+
+```
+backend/
+├── venv/              # Virtual environment (disarankan untuk tidak di-commit ke Git)
+├── app.py             # File utama Flask
+├── requirements.txt   # Daftar library yang diperlukan
+├── README.md          # Dokumentasi proyek
+db/
+frontend/
+└─ my-react-app/
+    ├─ src/
+    ├─ public/
+    ├─ package.json
+    ├─ vite.config.js
+    └─ ...
+```
