@@ -1,19 +1,29 @@
 # Dokumentasi Singkat
 
-komputasi awan dan containerization memberikan gambaran umum mengenai peran teknologi cloud dalam pengembangan aplikasi modern. dalam dokumentasi ini dituliskan dokumentasi untuk mengakses API Flask dan React + Vite
+## Menghubungkan React ke Flask
 
-## API Sederhana dengan Flask
+### 📄 Deskripsi Singkat
+
+Pada tahap ini, mahasiswa akan mempelajari cara memanggil API Flask dari React. Tujuannya adalah agar frontend dapat menampilkan data yang didapat dari backend dengan cara yang efisien dan optimal.
+
+### 🎯 Tujuan Pembelajaran
+- Mahasiswa memahami konsep fetching data di React.
+- Mahasiswa dapat membuat permintaan (GET) ke API Flask dan menampilkannya di React.
+- Mahasiswa memahami cara menangani error saat melakukan request ke API.
+
+## Proyek 1 : API Sederhana dengan Flask
 
 ### 📌 Deskripsi
 
-Proyek ini adalah API sederhana menggunakan Flask yang mengembalikan pesan JSON ketika diakses melalui endpoint /.
+Proyek ini adalah API sederhana menggunakan Flask yang mengembalikan pesan JSON ketika diakses melalui endpoint /api/data. API ini akan digunakan oleh React sebagai sumber data.
 
 ### 🎯 Tujuan
 - Memahami dasar penggunaan Flask.
 - Membuat dan menjalankan server lokal dengan Flask.
 - Membuat endpoint sederhana yang mengembalikan JSON response.
+- Mengatur CORS agar React dapat mengakses API dengan aman.
 
-### 🛠️ Cara Menjalankan
+### 🛠️ Langkah-langkah
 
 #### 1. Buat dan Aktifkan Virtual Environment
 
@@ -33,15 +43,48 @@ source venv/bin/activate
 
 #### 2. Instal Dependensi
 
-Pastikan semua dependensi yang dibutuhkan telah terinstal dengan menjalankan perintah berikut:
+Instal dependensi berikut agar frontend dapat mengakses endpoint dari backend:
 
 ```
+pip install flask flask-cors
+```
+
+Juga menginstal dependensi berikut jika membuat virtual environment ulang di komputer lain :
+```
 pip install -r requirements.txt
+```
+
+#### 3. Tambahkan Endpoint di Flask
+
+Buka app.py dan tambahkan kode berikut:
+```py
+from flask import Flask, jsonify
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app)
+
+@app.route('/')
+def home():
+    return jsonify({"message": "Hello from Flask!"})
+
+@app.route('/api/data')
+def get_data():
+    return jsonify({"data": "Hello from Flask API"})
+
+// Latihan Mandiri
+@app.route('/api/info')
+def info():
+  return jsonify({
+    "Nama": "Taufik Ilham",
+    "Nim": "10221081",
+    })
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)
 ```
 
 #### 3. Jalankan Server Flask
-
-pip install -r requirements.txt
 
 ```
 python app.py
@@ -53,13 +96,29 @@ Buka browser atau gunakan Postman untuk mengakses API di:
 
 ```
 http://127.0.0.1:5000/
-```
 
-Jika berhasil, akan mendapatkan response JSON seperti berikut:
-
-```
+// Jika berhasil, akan menampilkan response JSON
 {
   "message": "Hello from Flask!"
+}
+```
+
+```
+http://127.0.0.1:5000/api/data
+
+// Jika berhasil, akan menampilkan response JSON
+{
+  "message": "Hello from Flask API!"
+}
+```
+
+```
+http://127.0.0.1:5000/api/info
+
+// Jika berhasil, akan menampilkan response JSON
+{
+  "Nama": "Taufik Ilham",
+  "Nim": "10221081"
 }
 ```
 
@@ -70,7 +129,6 @@ backend/
 ├── venv/              # Virtual environment (disarankan untuk tidak di-commit ke Git)
 ├── app.py             # File utama Flask
 ├── requirements.txt   # Daftar library yang diperlukan
-├── README.md          # Dokumentasi proyek
 ```
 
 ### 🔄 Catatan
@@ -90,21 +148,24 @@ Untuk keluar dari virtual environment, gunakan perintah berikut:
 deactivate
 ```
 
-## Proyek 2: Membuat Aplikasi Frontend Sederhana dengan React + Vite
+## Proyek 2: Menghubungkan React ke Flask
 
 ### 📌 Deskripsi
-Pembuatan kerangka kerja React menggunakan Vite untuk frontend. Tujuan utamanya adalah membuat tampilan dasar dan menampilkan tulisan sederhana untuk memastikan React berhasil dijalankan dengan Vite saat mengakses localhost http://localhost:5173/.
+Pembuatan kerangka kerja React menggunakan Vite untuk frontend. Tujuan utamanya adalah menghubungkan React dengan API Flask dan menampilkan data dari backend.
 
 ### 🎯 Tujuan
-Mampu menjalankan aplikasi React di local development server menggunakan Vite.
+- Mampu menjalankan aplikasi React di local development server menggunakan Vite.
+- Mampu mengambil data dari Flask API dan menampilkannya dengan React.
+- Memahami konsep useEffect dan useState dalam React.
+- Menghandle error saat melakukan request ke API.
 
-### 🛠️ Cara Menjalankan
+### 🛠️ Langkah-langkah
 
 #### 1. Membuat Proyek React dengan Vite
 
 Jalankan perintah berikut untuk membuat proyek React dengan Vite:
 
-```sh
+```
 cd ../frontend
 npm create vite@latest my-react-app -- --template react
 cd my-react-app
@@ -114,28 +175,49 @@ npm run dev
 
 Setelah menjalankan `npm run dev`, salin URL lokal (misalnya, `http://127.0.0.1:5173/`) dari terminal dan buka di browser.
 
-#### 2. Struktur Direktori React + Vite
-```
-frontend/
-└─ my-react-app/
-    ├─ src/
-    ├─ public/
-    ├─ package.json
-    ├─ vite.config.js
-    └─ ...
-```
-
-#### 3. Membuat Halaman Sederhana
-Buka `src/App.jsx` dan ganti konten default dengan:
-
+#### 2. Membuat Fungsi Fetch di React
+Buka src/App.jsx dan ubah kontennya menjadi:
 ```jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';     
 
 function App() {
+  const [apiData, setApiData] = useState(null);  
+  
+  // Latihan Mandiri       
+  const [infoData, setInfoData] = useState(null);       
+
+  useEffect(() => {
+    fetch('http://localhost:5000/api/data')
+      .then(response => response.json())
+      .then(data => {
+        setApiData(data.data);
+      })
+      .catch(error => console.error(error));
+
+    // Latihan Mandiri
+    fetch('http://localhost:5000/api/info')
+      .then(response => response.json())
+      .then(data => {
+        setInfoData(data);
+      })
+      .catch(error => console.error(error));
+  }, []);
+
   return (
     <div style={{ textAlign: 'center', marginTop: '50px' }}>
-      <h1>Hello from React + Vite!</h1>
-      <p>This is a simple React app built with Vite.</p>
+      <h1>React & Flask Integration</h1>
+      <p>{apiData ? apiData : "Loading data..."}</p>
+
+      // Latihan Mandiri
+      <h2>Info Mahasiswa</h2>
+      {infoData ? (
+        <div>
+          <p>Nama: {infoData.Nama}</p>
+          <p>NIM: {infoData.Nim}</p>
+        </div>
+      ) : (
+        <p>Loading info...</p>
+      )}
     </div>
   );
 }
@@ -143,10 +225,10 @@ function App() {
 export default App;
 ```
 
-#### 4. Menjalankan Aplikasi React + Vite
+#### 3. Menjalankan Aplikasi React + Vite
 Jalankan aplikasi React + Vite dengan perintah:
 
-```sh
+```
 npm run dev
 ```
 
@@ -156,3 +238,15 @@ Local: http://127.0.0.1:5173/
 ```
 
 Akses aplikasi di browser menggunakan URL yang diberikan (biasanya `http://127.0.0.1:5173/`).
+
+#### 4. Struktur Direktori React + Vite
+```
+frontend/
+└─ my-react-app/
+    ├─ src/
+    │   ├─ App.jsx      # File utama React
+    ├─ public/
+    ├─ package.json
+    ├─ vite.config.js
+    └─ ...
+```
