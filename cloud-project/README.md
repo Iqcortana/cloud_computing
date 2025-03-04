@@ -64,6 +64,10 @@ Jika berhasil, akan mendapatkan response JSON seperti berikut:
 ```
 
 ### 📂 Struktur Proyek
+Virtual Environment(venv) diinstal di terminal menggunakan perintah
+```
+
+```
 
 ```
 backend/
@@ -157,7 +161,113 @@ Local: http://127.0.0.1:5173/
 
 Akses aplikasi di browser menggunakan URL yang diberikan (biasanya `http://127.0.0.1:5173/`).
 
+## Proyek 4 : Menghubungkan React ke Flask
+
+### 📌 Deskripsi
+Pemanggilan API Flask dari React. Tujuannya adalah agar frontend dapat menampilkan data yang didapat dari backend.
+
+### 🎯 Tujuan
+- Memahami konsep fetching data di React.
+- Dapat membuat permintaan (GET) ke API Flask dan menampilkannya di React.
+
+### 🛠️ Cara Menjalankan
+
+#### 1. Menambahkan Endpoint di Flask
+Tambahkan endpoint berikut di app.py:
+```
+@app.route('/api/data')
+def get_data():
+    return jsonify({"data": "Hello from Flask API"})
+```
+
+Penting: Urutan Definisi Fungsi
+Pastikan fungsi get_data() didefinisikan di atas blok berikut dalam app.py:
+```
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)
+```
+Kode yang benar harus terlihat seperti ini:
+```
+from flask import Flask, jsonify
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return jsonify({"message": "Hello from Flask!"})
+
+@app.route('/api/data')
+def get_data():
+    return jsonify({"data": "Hello from Flask API"})
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)
+```
+
+#### 2. Menjalankan Flask
+Pastikan Anda berada dalam virtual environment. Jika belum aktif, jalankan perintah berikut:
+```
+source venv/bin/activate  # Untuk Linux/MacOS
+.\venv\Scripts\activate  # Untuk Windows
+```
+Jalankan server Flask dengan perintah:
+```
+python app.py
+```
+Pastikan endpoint dapat diakses di http://localhost:5000/api/data.
+
+Catatan: Tidak perlu mematikan terminal server Flask. Buka tab baru atau terminal baru untuk menjalankan frontend React.
+
+#### 3. Memanggil Endpoint dari React
+Buka src/App.jsx pada proyek React dan ganti kontennya dengan kode berikut:
+```
+import React, { useState, useEffect } from 'react';
+
+function App() {
+  const [apiData, setApiData] = useState(null);
+
+  useEffect(() => {
+    fetch('http://localhost:5000/api/data')
+      .then(response => response.json())
+      .then(data => {
+        setApiData(data.data);
+      })
+      .catch(error => console.error(error));
+  }, []);
+
+  return (
+    <div style={{ textAlign: 'center', marginTop: '50px' }}>
+      <h1>React & Flask Integration</h1>
+      <p>{apiData ? apiData : "Loading data..."}</p>
+    </div>
+  );
+}
+
+export default App;
+```
+
+#### 4. Menjalankan Aplikasi React
+Di terminal proyek React (frontend/my-react-app), jalankan perintah:
+```
+npm run dev
+```
+Buka browser ke http://localhost:5173/.
+
 ## 📂 Struktur Keseluruhan
+### A. Backend
+1. Virtual Environment berisi semua library yang digunakan dalam proyek ini seperti Flask dan Flask-cors
+2. app.py merupakan kode utama untuk backend. dijalankan menggunakan bahasa Python yang menggunakan Framework Flask dan library Flask-CORS
+3. requirements.txt dibuat otomatis menggunakan perintah
+```
+pip freeze > requirements.txt
+```
+
+### B. Database
+Untuk sekarang masih kosong, rencananya akan disambungkan dengan PostgreSQL.
+
+### C. Frontend
+1. berisi direktori my-react-app yang diinstal melalui terminal(instalasi React.JS) berisi file default framework React.JS.
+2. file src/App.jsx merupakan file utama dalam tampilan frontend dalam proyek ini
 
 ```
 backend/
