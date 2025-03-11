@@ -1,31 +1,32 @@
 # Dokumentasi Singkat
 
-## Menghubungkan React ke Flask
+## Integrasi Flask dengan PostgreSQL
 
 ### 📄 Deskripsi Singkat
 
-Pada tahap ini, mahasiswa akan mempelajari cara memanggil API Flask dari React. Tujuannya adalah agar frontend dapat menampilkan data yang didapat dari backend dengan cara yang efisien dan optimal.
+Proyek ini adalah implementasi sederhana dari aplikasi web berbasis Flask yang terintegrasi dengan database PostgreSQL. Pengguna dapat melakukan operasi CRUD (Create, Read, Update, Delete) pada database PostgreSQL menggunakan API yang disediakan.
 
 ### 🎯 Tujuan Pembelajaran
-- Mahasiswa memahami konsep fetching data di React.
-- Mahasiswa dapat membuat permintaan (GET) ke API Flask dan menampilkannya di React.
-- Mahasiswa memahami cara menangani error saat melakukan request ke API.
+- Menghubungkan aplikasi Flask dengan PostgreSQL.
+- Memahami cara kerja database relational dalam konteks aplikasi web.
+- Mengimplementasikan operasi CRUD menggunakan Flask dan PostgreSQL.
 
-## Proyek 1 : API Sederhana dengan Flask
+### 🛠 Persyaratan Sistem
+Sebelum memulai, pastikan sistem Anda memiliki:
+- Python 3.x terinstal
+- PostgreSQL terinstal dan dikonfigurasi
+- Virtual Environment Python
 
-### 📌 Deskripsi
+### 🚀 Instalasi dan Konfigurasi
 
-Proyek ini adalah API sederhana menggunakan Flask yang mengembalikan pesan JSON ketika diakses melalui endpoint /api/data. API ini akan digunakan oleh React sebagai sumber data.
+#### 1. Clone Repository
 
-### 🎯 Tujuan
-- Memahami dasar penggunaan Flask.
-- Membuat dan menjalankan server lokal dengan Flask.
-- Membuat endpoint sederhana yang mengembalikan JSON response.
-- Mengatur CORS agar React dapat mengakses API dengan aman.
+```
+git clone https://github.com/Iqcortana/cloud_computing.git
+cd cloud-project\backend
+```
 
-### 🛠️ Langkah-langkah
-
-#### 1. Buat dan Aktifkan Virtual Environment
+#### 2. Buat dan Aktifkan Virtual Environment
 
 Sebelum menjalankan proyek, pastikan virtual environment sudah diaktifkan.
 
@@ -41,7 +42,7 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-#### 2. Instal Dependensi
+#### 3. Instal Dependensi
 
 Instal dependensi berikut agar frontend dapat mengakses endpoint dari backend:
 
@@ -54,199 +55,99 @@ Juga menginstal dependensi berikut jika membuat virtual environment ulang di kom
 pip install -r requirements.txt
 ```
 
-#### 3. Tambahkan Endpoint di Flask
+#### 4. Instal dan Konfigurasi PostgreSQL
 
-Buka app.py dan tambahkan kode berikut:
-```py
-from flask import Flask, jsonify
-from flask_cors import CORS
+Pastikan PostgreSQL telah terinstal dan jalankan perintah berikut untuk membuat database:
 
-app = Flask(__name__)
-CORS(app)
-
-@app.route('/')
-def home():
-    return jsonify({"message": "Hello from Flask!"})
-
-@app.route('/api/data')
-def get_data():
-    return jsonify({"data": "Hello from Flask API"})
-
-// Latihan Mandiri
-@app.route('/api/info')
-def info():
-  return jsonify({
-    "Nama": "Taufik Ilham",
-    "Nim": "10221081",
-    })
-
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+```
+CREATE DATABASE test_db;
+CREATE USER student WITH PASSWORD 'password';
+GRANT ALL PRIVILEGES ON DATABASE test_db TO student;
 ```
 
-#### 3. Jalankan Server Flask
+Jika perlu, buat tabel dengan perintah berikut:
+
+```
+CREATE TABLE IF NOT EXISTS items (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100),
+  description TEXT
+);
+```
+
+#### 5. Konfigurasi Koneksi Database di app.py
+
+Pastikan app.py memiliki konfigurasi koneksi seperti berikut:
+
+```
+import psycopg2
+from flask import Flask, jsonify, request
+
+def get_db_connection():
+    conn = psycopg2.connect(
+        host="localhost",
+        database="test_db",
+        user="student",
+        password="password"
+    )
+    return conn
+```
+
+### 🔧 Menjalankan Aplikasi
+
+Jalankan server Flask dengan perintah berikut:
 
 ```
 python app.py
 ```
 
-#### 4. Akses API
+Aplikasi akan berjalan di http://127.0.0.1:5000.
 
-Buka browser atau gunakan Postman untuk mengakses API di:
+### 🔍 Menguji API dengan Postman
+
+
+#### 1. Menjalankan POST Request (Menambah data baru)
+
+- URL: http://127.0.0.1:5000/api/items
+- Method: POST
+- Headers: Content-Type: application/json
+- Body (JSON):
 
 ```
-http://127.0.0.1:5000/
-
-// Jika berhasil, akan menampilkan response JSON
 {
-  "message": "Hello from Flask!"
+  "name": "Item 1",
+  "description": "Description Item 1"
 }
 ```
 
-```
-http://127.0.0.1:5000/api/data
+- Response :
 
-// Jika berhasil, akan menampilkan response JSON
+``` 
 {
-  "message": "Hello from Flask API!"
+    "description": "Description Item 1",
+    "id": 1,
+    "name": "Item 1"
 }
 ```
 
-```
-http://127.0.0.1:5000/api/info
+#### 2. Menjalankan GET Request (Membaca data)
 
-// Jika berhasil, akan menampilkan response JSON
-{
-  "Nama": "Taufik Ilham",
-  "Nim": "10221081"
-}
-```
-
-### 📂 Struktur Proyek
+- URL: http://127.0.0.1:5000/api/items
+- Method: GET
+- Response:
 
 ```
-backend/
-├── venv/              # Virtual environment (disarankan untuk tidak di-commit ke Git)
-├── app.py             # File utama Flask
-├── requirements.txt   # Daftar library yang diperlukan
+[
+    {
+        "description": "Description Item 1",
+        "id": 1,
+        "name": "Item 1"
+    }
+]
 ```
 
-### 🔄 Catatan
+Ulangi langkah di atas untuk menguji fitur CRUD lainnya seperti Update dan Delete.
 
-Jika terdapat error terkait izin eksekusi skrip di Windows, jalankan perintah berikut di PowerShell sebagai Administrator:
-```
-Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
-```
+### ✅ Selesai!
 
-Jika Flask belum terinstal, jalankan:
-```
-pip install Flask
-```
-
-Untuk keluar dari virtual environment, gunakan perintah berikut:
-```
-deactivate
-```
-
-## Proyek 2: Menghubungkan React ke Flask
-
-### 📌 Deskripsi
-Pembuatan kerangka kerja React menggunakan Vite untuk frontend. Tujuan utamanya adalah menghubungkan React dengan API Flask dan menampilkan data dari backend.
-
-### 🎯 Tujuan
-- Mampu menjalankan aplikasi React di local development server menggunakan Vite.
-- Mampu mengambil data dari Flask API dan menampilkannya dengan React.
-- Memahami konsep useEffect dan useState dalam React.
-- Menghandle error saat melakukan request ke API.
-
-### 🛠️ Langkah-langkah
-
-#### 1. Membuat Proyek React dengan Vite
-
-Jalankan perintah berikut untuk membuat proyek React dengan Vite:
-
-```
-cd ../frontend
-npm create vite@latest my-react-app -- --template react
-cd my-react-app
-npm install
-npm run dev
-```
-
-Setelah menjalankan `npm run dev`, salin URL lokal (misalnya, `http://127.0.0.1:5173/`) dari terminal dan buka di browser.
-
-#### 2. Membuat Fungsi Fetch di React
-Buka src/App.jsx dan ubah kontennya menjadi:
-```jsx
-import React, { useState, useEffect } from 'react';     
-
-function App() {
-  const [apiData, setApiData] = useState(null);  
-  
-  // Latihan Mandiri       
-  const [infoData, setInfoData] = useState(null);       
-
-  useEffect(() => {
-    fetch('http://localhost:5000/api/data')
-      .then(response => response.json())
-      .then(data => {
-        setApiData(data.data);
-      })
-      .catch(error => console.error(error));
-
-    // Latihan Mandiri
-    fetch('http://localhost:5000/api/info')
-      .then(response => response.json())
-      .then(data => {
-        setInfoData(data);
-      })
-      .catch(error => console.error(error));
-  }, []);
-
-  return (
-    <div style={{ textAlign: 'center', marginTop: '50px' }}>
-      <h1>React & Flask Integration</h1>
-      <p>{apiData ? apiData : "Loading data..."}</p>
-
-      // Latihan Mandiri
-      <h2>Info Mahasiswa</h2>
-      {infoData ? (
-        <div>
-          <p>Nama: {infoData.Nama}</p>
-          <p>NIM: {infoData.Nim}</p>
-        </div>
-      ) : (
-        <p>Loading info...</p>
-      )}
-    </div>
-  );
-}
-
-export default App;
-```
-
-#### 3. Menjalankan Aplikasi React + Vite
-Jalankan aplikasi React + Vite dengan perintah:
-
-```
-npm run dev
-```
-
-Pastikan terminal menampilkan informasi seperti:
-```
-Local: http://127.0.0.1:5173/
-```
-
-Akses aplikasi di browser menggunakan URL yang diberikan (biasanya `http://127.0.0.1:5173/`).
-
-#### 4. Struktur Direktori React + Vite
-```
-frontend/
-└─ my-react-app/
-    ├─ src/
-    │   ├─ App.jsx      # File utama React
-    ├─ public/
-    ├─ package.json
-    ├─ vite.config.js
-    └─ ...
-```
+Sekarang Anda telah berhasil menjalankan proyek Flask dengan PostgreSQL dan menguji API menggunakan Postman! 🚀
