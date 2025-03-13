@@ -401,6 +401,76 @@ Aplikasi akan berjalan di http://127.0.0.1:5000.
 
 Ulangi langkah di atas untuk menguji fitur CRUD lainnya seperti Update dan Delete.
 
+# Praktikum 6: Dockerfile untuk Backend Flask
+
+## 📄 Deskripsi Singkat
+Kami telah berhasil membuat Dockerfile untuk backend Flask sehingga aplikasi dapat dijalankan dalam kontainer.
+
+## 🎯 Tujuan Pembelajaran
+- Memahami sintaks dasar Dockerfile.
+- Mampu membangun Docker image untuk aplikasi Flask.
+
+## 👩‍💻 Pembagian Tugas Tim
+- **Backend Engineer**: Menyusun Dockerfile untuk Flask.
+- **Infrastructure Engineer**: Menjalankan container dan menguji image yang telah dibuat.
+
+## 🛠️ Langkah-Langkah Praktikum
+
+### Persiapan Awal
+Sebelum menjalankan perintah Docker, kami memastikan bahwa Docker Desktop sudah berjalan. Jika belum, menjalankan `docker info` akan menghasilkan error seperti berikut:
+
+```
+Server:
+ERROR: error during connect: Get "http://%2F%2F.%2Fpipe%2FdockerDesktopLinuxEngine/v1.47/info": open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.
+```
+
+Untuk mengatasinya, kami membuka aplikasi Docker Desktop dan menunggu hingga status **"Docker is running"** muncul.
+
+### Membuat Dockerfile
+Kami membuat file **Dockerfile** di dalam folder `backend` dengan isi sebagai berikut:
+
+```dockerfile
+# backend/Dockerfile
+FROM python:3.9-slim
+
+WORKDIR /app
+
+COPY requirements.txt requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+EXPOSE 5000
+CMD ["python", "app.py"]
+```
+
+### Menyiapkan requirements.txt
+Kami menambahkan dependensi berikut ke dalam file **requirements.txt**:
+
+```
+flask
+flask-cors
+psycopg2-binary
+```
+
+### Build Docker Image
+Setelah semua file siap, kami membangun image Docker dengan perintah:
+
+```
+cd backend
+docker build -t flask-backend:1.0 .
+```
+
+### Menjalankan Docker Container
+Ketika image telah berhasil dibuat, kami menjalankan container menggunakan perintah berikut:
+
+```
+docker run -d -p 5000:5000 --name flask-container flask-backend:1.0
+```
+
+### Verifikasi di Browser
+Kami kemudian memverifikasi bahwa aplikasi Flask berjalan dengan mengakses [http://localhost:5000](http://localhost:5000) di browser.
+
 ### ✅ Selesai!
 
 ## 📂 Struktur Keseluruhan
