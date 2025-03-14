@@ -1,20 +1,22 @@
 # Dokumentasi Singkat
 
-## Integrasi Flask dengan PostgreSQL
+## Integrasi Flask dengan PostgreSQL dan Docker
 
 ### 📄 Deskripsi Singkat
 
-Proyek ini adalah implementasi sederhana dari aplikasi web berbasis Flask yang terintegrasi dengan database PostgreSQL. Pengguna dapat melakukan operasi CRUD (Create, Read, Update, Delete) pada database PostgreSQL menggunakan API yang disediakan.
+Proyek ini adalah implementasi sederhana dari aplikasi web berbasis Flask yang terintegrasi dengan database PostgreSQL dan dikemas menggunakan Docker. Pengguna dapat melakukan operasi CRUD (Create, Read, Update, Delete) pada database PostgreSQL menggunakan API yang disediakan.
 
 ### 🎯 Tujuan Pembelajaran
 - Menghubungkan aplikasi Flask dengan PostgreSQL.
 - Memahami cara kerja database relational dalam konteks aplikasi web.
 - Mengimplementasikan operasi CRUD menggunakan Flask dan PostgreSQL.
+- Menggunakan Docker untuk mengemas aplikasi dalam container.
 
 ### 🛠 Persyaratan Sistem
 Sebelum memulai, pastikan sistem Anda memiliki:
 - Python 3.x terinstal
 - PostgreSQL terinstal dan dikonfigurasi
+- Docker dan Docker Desktop terinstal dan berjalan
 - Virtual Environment Python
 
 ### 🚀 Instalasi dan Konfigurasi
@@ -103,6 +105,57 @@ python app.py
 
 Aplikasi akan berjalan di http://127.0.0.1:5000.
 
+### 🔥 Dockerization: Menjalankan Aplikasi dalam Container
+
+#### 1. Pastikan Docker Berjalan
+
+Pastikan Docker Desktop telah berjalan sebelum menjalankan perintah Docker. Jalankan perintah berikut untuk memastikan Docker aktif:
+
+```
+docker info
+```
+
+Jika terjadi error, pastikan Docker Desktop dalam keadaan running.
+
+#### 2. Membuat Dockerfile
+
+Buat file `Dockerfile` di dalam folder backend dengan isi berikut:
+
+```
+# backend/Dockerfile
+FROM python:3.9-slim
+
+WORKDIR /app
+
+COPY requirements.txt requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+EXPOSE 5000
+CMD ["python", "app.py"]
+```
+
+#### 3. Build Docker Image
+Jalankan perintah berikut untuk membangun image Docker:
+
+```
+cd backend
+docker build -t flask-backend:1.0 .
+```
+
+#### 4. Menjalankan Docker Container
+
+Setelah image berhasil dibuat, jalankan container dengan perintah berikut:
+
+```
+docker run -d -p 5000:5000 --name flask-container flask-backend:1.0
+```
+
+#### 5. Verifikasi di Browser
+
+Buka browser dan akses http://localhost:5000 untuk memastikan aplikasi berjalan dalam container.
+
 ### 🔍 Menguji API dengan Postman
 
 
@@ -150,4 +203,4 @@ Ulangi langkah di atas untuk menguji fitur CRUD lainnya seperti Update dan Delet
 
 ### ✅ Selesai!
 
-Sekarang Anda telah berhasil menjalankan proyek Flask dengan PostgreSQL dan menguji API menggunakan Postman! 🚀
+Sekarang Anda telah berhasil menjalankan proyek Flask dengan PostgreSQL dan Docker serta menguji API menggunakan Postman! 🚀
