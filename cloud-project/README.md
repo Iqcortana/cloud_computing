@@ -410,10 +410,6 @@ Kami telah berhasil membuat Dockerfile untuk backend Flask sehingga aplikasi dap
 - Memahami sintaks dasar Dockerfile.
 - Mampu membangun Docker image untuk aplikasi Flask.
 
-## 👩‍💻 Pembagian Tugas Tim
-- **Backend Engineer**: Menyusun Dockerfile untuk Flask.
-- **Infrastructure Engineer**: Menjalankan container dan menguji image yang telah dibuat.
-
 ## 🛠️ Langkah-Langkah Praktikum
 
 ### Persiapan Awal
@@ -471,6 +467,78 @@ docker run -d -p 5000:5000 --name flask-container flask-backend:1.0
 ### Verifikasi di Browser
 Kami kemudian memverifikasi bahwa aplikasi Flask berjalan dengan mengakses [http://localhost:5000](http://localhost:5000) di browser.
 
+# PEKAN 7 – Dockerization Bagian 2 (Membuat Dockerfile untuk React dengan Vite)
+
+## 📄 Deskripsi Singkat
+Kami telah menyelesaikan proses containerization dengan membuat Dockerfile untuk aplikasi React berbasis Vite. Dengan ini, frontend dapat berjalan di dalam kontainer secara optimal.
+
+## 🎯 Tujuan Pembelajaran
+- Memahami cara membuat Dockerfile untuk aplikasi React yang menggunakan Vite.
+- Mampu membangun image dan menjalankan container React dengan Vite.
+
+## 🛠️ Langkah-Langkah Praktikum
+
+### Persiapan Awal
+Sebelum menjalankan perintah Docker, kami memastikan Docker Desktop sudah berjalan. Jika belum, menjalankan `docker info` akan menghasilkan error seperti berikut:
+
+```
+Server:
+ERROR: error during connect: Get "http://%2F%2F.%2Fpipe%2FdockerDesktopLinuxEngine/v1.47/info": open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.
+```
+
+Untuk menghindari masalah tersebut, kami membuka aplikasi Docker Desktop dan menunggu hingga status **"Docker is running"** muncul.
+
+### Membuat Dockerfile
+Kami membuat file **Dockerfile** di dalam folder `frontend/my-react-app` dengan isi sebagai berikut:
+
+```dockerfile
+# frontend/my-react-app/Dockerfile
+FROM node:14-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+# Build untuk production menggunakan Vite
+RUN npm run build
+
+# Gunakan Nginx untuk serve static file
+FROM nginx:stable-alpine
+COPY --from=0 /app/dist /usr/share/nginx/html
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+### Build Docker Image
+Sebelum membangun image Docker, kami menjalankan perintah berikut untuk memastikan folder build telah dihasilkan:
+
+```
+npm run build
+```
+
+Selanjutnya, kami membangun image Docker dengan perintah:
+
+```
+cd frontend/my-react-app
+docker build -t react-frontend-vite:1.0 .
+```
+
+### Menjalankan Docker Container
+Setelah image berhasil dibuat, kami menjalankan container menggunakan perintah berikut:
+
+```
+docker run -d -p 3000:80 --name react-container-vite react-frontend-vite:1.0
+```
+
+### Verifikasi di Browser
+Terakhir, kami memastikan aplikasi berjalan dengan membuka [http://localhost:3000](http://localhost:3000) di browser.
+
+
+
 ### ✅ Selesai!
 
 ## 📂 Struktur Keseluruhan
@@ -493,12 +561,14 @@ Untuk sekarang masih kosong, rencananya akan disambungkan dengan PostgreSQL.
 backend/
 ├── venv/              # Virtual environment (disarankan untuk tidak di-commit ke Git)
 ├── app.py             # File utama Flask
+├── Dockerfile         # File docker untuk pengaturan backend
 ├── requirements.txt   # Daftar library yang diperlukan
 ├── README.md          # Dokumentasi proyek
 db/
 frontend/
 └─ my-react-app/
     ├─ src/
+    ├─ Dockerfile     # File docker untuk pengaturan frontend
     ├─ public/
     ├─ package.json
     ├─ vite.config.js
