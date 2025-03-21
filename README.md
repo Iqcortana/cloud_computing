@@ -1,21 +1,25 @@
 # Dokumentasi Singkat
 
-## Integrasi Flask dengan PostgreSQL dan Docker
+## Integrasi Flask dengan PostgreSQL, React dengan Vite dan Docker
 
 ### 📄 Deskripsi Singkat
 
-Proyek ini adalah implementasi sederhana dari aplikasi web berbasis Flask yang terintegrasi dengan database PostgreSQL dan dikemas menggunakan Docker. Pengguna dapat melakukan operasi CRUD (Create, Read, Update, Delete) pada database PostgreSQL menggunakan API yang disediakan.
+Proyek ini adalah implementasi aplikasi web berbasis Flask sebagai backend dan React dengan Vite sebagai frontend, yang terintegrasi dengan database PostgreSQL dan dikemas menggunakan Docker. Pengguna dapat melakukan operasi CRUD (Create, Read, Update, Delete) pada database PostgreSQL menggunakan API yang disediakan.
 
 ### 🎯 Tujuan Pembelajaran
 - Menghubungkan aplikasi Flask dengan PostgreSQL.
 - Memahami cara kerja database relational dalam konteks aplikasi web.
 - Mengimplementasikan operasi CRUD menggunakan Flask dan PostgreSQL.
 - Menggunakan Docker untuk mengemas aplikasi dalam container.
+- Membuat Dockerfile untuk aplikasi React dengan Vite.
+- Menjalankan frontend React di dalam container.
+
 
 ### 🛠 Persyaratan Sistem
 Sebelum memulai, pastikan sistem Anda memiliki:
 - Python 3.x terinstal
 - PostgreSQL terinstal dan dikonfigurasi
+- Node.js terinstal untuk pengembangan frontend React
 - Docker dan Docker Desktop terinstal dan berjalan
 - Virtual Environment Python
 
@@ -156,6 +160,55 @@ docker run -d -p 5000:5000 --name flask-container flask-backend:1.0
 
 Buka browser dan akses http://localhost:5000 untuk memastikan aplikasi berjalan dalam container.
 
+### 🔥 Dockerization: Frontend dengan React + Vite
+
+#### 1. Pastikan Docker Berjalan
+
+Pastikan Docker Desktop telah berjalan sebelum menjalankan perintah Docker. Jalankan perintah berikut untuk memastikan Docker aktif:
+
+```
+docker info
+```
+
+#### 2. Membuat Dockerfile untuk React dengan Vite
+
+Buat file Dockerfile di dalam folder frontend/my-react-app dengan isi berikut:
+
+```
+# frontend/my-react-app/Dockerfile
+FROM node:14-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+# Build untuk production menggunakan Vite
+RUN npm run build
+
+# Gunakan Nginx untuk serve static file
+FROM nginx:stable-alpine
+COPY --from=0 /app/dist /usr/share/nginx/html
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+#### 3. Build dan Jalankan Docker Container untuk Frontend
+
+```
+cd frontend/my-react-app
+npm run build
+docker build -t react-frontend-vite:1.0 .
+docker run -d -p 3000:80 --name react-container-vite react-frontend-vite:1.0
+```
+
+#### 4. Verifikasi di Browser
+
+Buka browser ke http://localhost:3000 untuk memastikan aplikasi React Vite berjalan.
+
 ### 🔍 Menguji API dengan Postman
 
 
@@ -203,4 +256,4 @@ Ulangi langkah di atas untuk menguji fitur CRUD lainnya seperti Update dan Delet
 
 ### ✅ Selesai!
 
-Sekarang Anda telah berhasil menjalankan proyek Flask dengan PostgreSQL dan Docker serta menguji API menggunakan Postman! 🚀
+Sekarang Anda telah berhasil menjalankan proyek Flask dengan PostgreSQL, React dengan Vite, serta menggunakan Docker untuk mengemas backend dan frontend dalam container! 🚀
