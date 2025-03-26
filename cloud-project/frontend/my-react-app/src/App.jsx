@@ -1,45 +1,41 @@
-import React, { useState, useEffect } from 'react';     // Import React hooks
+import { useState, useEffect } from "react";
 
 function App() {
-  const [apiData, setApiData] = useState(null);         // State for API data
-  const [infoData, setInfoData] = useState(null);       // State for student info
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Fetching Data
   useEffect(() => {
-
-    // Fetch data from endpoint '/api/data'
-    fetch('http://localhost:5000/api/data')
-      .then(response => response.json())
-      .then(data => {
-        setApiData(data.data);
+    fetch("/api/items")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
       })
-      .catch(error => console.error(error));
-
-    // Fetch data from endpoint '/api/info'
-    fetch('http://localhost:5000/api/info')
-      .then(response => response.json())
-      .then(data => {
-        setInfoData(data);
+      .then((data) => {
+        setItems(data);
+        setLoading(false);
       })
-      .catch(error => console.error(error));
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+        setLoading(false);
+      });
   }, []);
 
+  if (loading) {
+    return <div>Loading data...</div>;
+  }
 
-  // {/* Returning data from fetch */}
   return (
-    <div style={{ textAlign: 'center', marginTop: '50px' }}>
+    <div>
       <h1>React & Flask Integration</h1>
-      <p>{apiData ? apiData : "Loading data..."}</p>
-
-      <h2>Info Mahasiswa</h2>
-      {infoData ? (
-        <div>
-          <p>Nama: {infoData.Nama}</p>
-          <p>NIM: {infoData.Nim}</p>
-        </div>
-      ) : (
-        <p>Loading info...</p>
-      )}
+      <ul>
+        {items.map((item) => (
+          <li key={item.id}>
+            <strong>{item.name}</strong>: {item.description}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

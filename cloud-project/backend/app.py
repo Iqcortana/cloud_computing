@@ -1,19 +1,22 @@
-from flask import Flask, jsonify, request    # import Flask dan jsonify to create an API
-import psycopg2
+from flask import Flask, jsonify, request  # Import Flask untuk membuat API, jsonify untuk mengembalikan data dalam format JSON, dan request untuk menerima data dari client
+from flask_cors import CORS  # Import CORS untuk mengizinkan akses lintas sumber (Cross-Origin Resource Sharing)
+import psycopg2  # Import psycopg2 untuk berinteraksi dengan database PostgreSQL
+import os  # Import os untuk membaca environment variables
 
-# Connection to PostgreSQL
+# Koneksi ke database PostgreSQL
 def get_db_connection():
     conn = psycopg2.connect(
-        host="localhost",
-        database="test_db",
-        user="student",
-        password="password"
+        host=os.environ.get("DB_HOST", "localhost"),
+        database=os.environ.get("DB_NAME", "test_db"),
+        user=os.environ.get("DB_USER", "student"),
+        password=os.environ.get("DB_PASSWORD", "password")
     )
     return conn
 
 
-# Initialize the flask app and Enable CORS for cross-origin requests
+# Inisialisasi Flask app
 app = Flask(__name__)
+CORS(app) # Mengaktifkan CORS agar API bisa diakses dari domain yang berbeda (misalnya React di port 3000) 
 
 # Main endpoint 
 @app.route('/')
@@ -30,9 +33,7 @@ def get_items():
     cur.close()
     conn.close()
 
-    items = []
-    for row in rows:
-        items.append({"id": row[0], "name": row[1], "description": row[2]})
+    items = [{"id": row[0], "name": row[1], "description": row[2]} for row in rows]
     return jsonify(items)
 
 # Endpoint untuk menambahkan data ke tabel 'items'
@@ -52,52 +53,6 @@ def create_item():
 
     return jsonify({"id": new_id, "name": name, "description": description}), 201
 
-# Endpoint PUT: Update data berdasarkan ID
-@app.route('/api/items/<int:item_id>', methods=['PUT'])
-def update_item(item_id):
-    data = request.json
-    name = data.get('name')
-    description = data.get('description')
-
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    cur.execute("SELECT * FROM items WHERE id = %s;", (item_id,))
-    item = cur.fetchone()
-
-    if not item:
-        cur.close()
-        conn.close()
-        return jsonify({"error": "Item not found"}), 404
-
-    cur.execute("UPDATE items SET name = %s, description = %s WHERE id = %s;", (name, description, item_id))
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    return jsonify({"id": item_id, "name": name, "description": description})
-
-# Endpoint DELETE: Hapus data berdasarkan ID
-@app.route('/api/items/<int:item_id>', methods=['DELETE'])
-def delete_item(item_id):
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    cur.execute("SELECT * FROM items WHERE id = %s;", (item_id,))
-    item = cur.fetchone()
-
-    if not item:
-        cur.close()
-        conn.close()
-        return jsonify({"error": "Item not found"}), 404
-
-    cur.execute("DELETE FROM items WHERE id = %s;", (item_id,))
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    return jsonify({"message": f"Item {item_id} deleted successfully"})
-
-# Run the flask server if the file executed directly
+# Menjalankan server Flask jika file ini dieksekusi langsung
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

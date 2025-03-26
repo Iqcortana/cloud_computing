@@ -1,18 +1,15 @@
 # Dokumentasi Singkat
 
-## Integrasi Flask dengan PostgreSQL, React dengan Vite dan Docker
+## Full Stack Project with Docker Compose
 
 ### 📄 Deskripsi Singkat
 
-Proyek ini adalah implementasi aplikasi web berbasis Flask sebagai backend dan React dengan Vite sebagai frontend, yang terintegrasi dengan database PostgreSQL dan dikemas menggunakan Docker. Pengguna dapat melakukan operasi CRUD (Create, Read, Update, Delete) pada database PostgreSQL menggunakan API yang disediakan.
+Proyek ini mengintegrasikan aplikasi Flask (Backend), React (Frontend), dan PostgreSQL (Database) menggunakan Docker Compose untuk mempermudah orkestrasi layanan dalam satu lingkungan pengembangan.
 
 ### 🎯 Tujuan Pembelajaran
-- Menghubungkan aplikasi Flask dengan PostgreSQL.
-- Memahami cara kerja database relational dalam konteks aplikasi web.
-- Mengimplementasikan operasi CRUD menggunakan Flask dan PostgreSQL.
-- Menggunakan Docker untuk mengemas aplikasi dalam container.
-- Membuat Dockerfile untuk aplikasi React dengan Vite.
-- Menjalankan frontend React di dalam container.
+- Menggunakan docker-compose.yml untuk mengelola multi-container aplikasi.
+- Menghubungkan React dan Flask serta memastikan data tersimpan dalam PostgreSQL.
+- Menggunakan environment variables untuk konfigurasi koneksi database.
 
 
 ### 🛠 Persyaratan Sistem
@@ -23,237 +20,219 @@ Sebelum memulai, pastikan sistem Anda memiliki:
 - Docker dan Docker Desktop terinstal dan berjalan
 - Virtual Environment Python
 
-### 🚀 Instalasi dan Konfigurasi
-
-#### 1. Clone Repository
-
+### 🛠️ Struktur Proyek
 ```
-git clone https://github.com/Iqcortana/cloud_computing.git
-cd cloud-project\backend
-```
-
-#### 2. Buat dan Aktifkan Virtual Environment
-
-Sebelum menjalankan proyek, pastikan virtual environment sudah diaktifkan.
-
-- **Windows:**
-```
-python -m venv venv
-venv\Scripts\activate
+cloud-project/
+│── backend/
+│   ├── app.py
+│   ├── requirements.txt
+│   ├── Dockerfile
+│── frontend/
+│   ├── my-react-app/
+│   │   ├── src/
+│   │   │   ├── App.jsx
+│   |   ├── Dockerfile
+│── init.sql
+│── docker-compose.yml
 ```
 
-- **Mac/Linux:**
-```
-python3 -m venv venv
-source venv/bin/activate
+### Langkah-Langkah Implementasi
+
+#### 1️⃣ Membuat docker-compose.yml
+Buat file docker-compose.yml di root proyek
+
+```yml
+version: '3.7'
+services:
+  backend:
+    build: 
+      context: ./backend
+    container_name: flask_container
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_NAME=test_db
+      - DB_USER=student
+      - DB_PASSWORD=password
+
+  frontend:
+    build:
+      context: ./frontend/my-react-app
+    container_name: react_container
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  db:
+    image: postgres:12-alpine
+    container_name: postgres_container
+    environment:
+      - POSTGRES_DB=test_db
+      - POSTGRES_USER=student
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  db_data:
 ```
 
-#### 3. Instal Dependensi
+#### 2️⃣ Membuat init.sql untuk Database
 
-Instal dependensi berikut agar frontend dapat mengakses endpoint dari backend:
+Tambahkan file init.sql dengan isi berikut untuk membuat tabel awal:
 
-```
-pip install flask flask-cors
-```
-
-Juga menginstal dependensi berikut jika membuat virtual environment ulang di komputer lain :
-```
-pip install -r requirements.txt
-```
-
-#### 4. Instal dan Konfigurasi PostgreSQL
-
-Pastikan PostgreSQL telah terinstal dan jalankan perintah berikut untuk membuat database:
-
-```
-CREATE DATABASE test_db;
-CREATE USER student WITH PASSWORD 'password';
-GRANT ALL PRIVILEGES ON DATABASE test_db TO student;
-```
-
-Jika perlu, buat tabel dengan perintah berikut:
-
-```
+```sql
 CREATE TABLE IF NOT EXISTS items (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(100),
-  description TEXT
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT
 );
+
+INSERT INTO items (name, description) VALUES
+('Test Item', 'This is a test description'),
+('Test Item 2', 'This is a test description 2');
 ```
 
-#### 5. Konfigurasi Koneksi Database di app.py
+#### 3️⃣ Menyesuaikan Backend 
 
-Pastikan app.py memiliki konfigurasi koneksi seperti berikut:
+Sesuaikan `backend\app.py` dengan code dibawah ini :
 
-```
-import psycopg2
-from flask import Flask, jsonify, request
+```py
+from flask import Flask, jsonify, request  # Import Flask untuk membuat API, jsonify untuk mengembalikan data dalam format JSON, dan request untuk menerima data dari client
+from flask_cors import CORS  # Import CORS untuk mengizinkan akses lintas sumber (Cross-Origin Resource Sharing)
+import psycopg2  # Import psycopg2 untuk berinteraksi dengan database PostgreSQL
+import os  # Import os untuk membaca environment variables
 
+# Koneksi ke database PostgreSQL
 def get_db_connection():
     conn = psycopg2.connect(
-        host="localhost",
-        database="test_db",
-        user="student",
-        password="password"
+        host=os.environ.get("DB_HOST", "localhost"),
+        database=os.environ.get("DB_NAME", "test_db"),
+        user=os.environ.get("DB_USER", "student"),
+        password=os.environ.get("DB_PASSWORD", "password")
     )
     return conn
+
+
+# Inisialisasi Flask app
+app = Flask(__name__)
+CORS(app) # Mengaktifkan CORS agar API bisa diakses dari domain yang berbeda (misalnya React di port 3000) 
+
+# Main endpoint 
+@app.route('/')
+def home():
+    return jsonify({"message": "Hello from Flask!"})
+
+# Endpoint untuk membaca data ke tabel 'items'
+@app.route('/api/items', methods=['GET'])
+def get_items():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name, description FROM items;")
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    items = [{"id": row[0], "name": row[1], "description": row[2]} for row in rows]
+    return jsonify(items)
+
+# Endpoint untuk menambahkan data ke tabel 'items'
+@app.route('/api/items', methods=['POST'])
+def create_item():
+    data = request.json
+    name = data['name']
+    description = data['description']
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO items (name, description) VALUES (%s, %s) RETURNING id;", (name, description))
+    new_id = cur.fetchone()[0]
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify({"id": new_id, "name": name, "description": description}), 201
+
+# Menjalankan server Flask jika file ini dieksekusi langsung
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)
 ```
 
-### 🔧 Menjalankan Aplikasi
+#### 4️⃣ Menyesuaikan Frontend (App.jsx)
 
-Jalankan server Flask dengan perintah berikut:
+```jsx
+import { useState, useEffect } from "react";
 
-```
-python app.py
-```
+function App() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-Aplikasi akan berjalan di http://127.0.0.1:5000.
+  useEffect(() => {
+    fetch("/api/items")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        setItems(data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+        setLoading(false);
+      });
+  }, []);
 
-### 🔥 Dockerization: Menjalankan Aplikasi dalam Container
+  if (loading) {
+    return <div>Loading data...</div>;
+  }
 
-#### 1. Pastikan Docker Berjalan
-
-Pastikan Docker Desktop telah berjalan sebelum menjalankan perintah Docker. Jalankan perintah berikut untuk memastikan Docker aktif:
-
-```
-docker info
-```
-
-Jika terjadi error, pastikan Docker Desktop dalam keadaan running.
-
-#### 2. Membuat Dockerfile
-
-Buat file `Dockerfile` di dalam folder backend dengan isi berikut:
-
-```
-# backend/Dockerfile
-FROM python:3.9-slim
-
-WORKDIR /app
-
-COPY requirements.txt requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY . .
-
-EXPOSE 5000
-CMD ["python", "app.py"]
-```
-
-#### 3. Build Docker Image
-Jalankan perintah berikut untuk membangun image Docker:
-
-```
-cd backend
-docker build -t flask-backend:1.0 .
-```
-
-#### 4. Menjalankan Docker Container
-
-Setelah image berhasil dibuat, jalankan container dengan perintah berikut:
-
-```
-docker run -d -p 5000:5000 --name flask-container flask-backend:1.0
-```
-
-#### 5. Verifikasi di Browser
-
-Buka browser dan akses http://localhost:5000 untuk memastikan aplikasi berjalan dalam container.
-
-### 🔥 Dockerization: Frontend dengan React + Vite
-
-#### 1. Pastikan Docker Berjalan
-
-Pastikan Docker Desktop telah berjalan sebelum menjalankan perintah Docker. Jalankan perintah berikut untuk memastikan Docker aktif:
-
-```
-docker info
-```
-
-#### 2. Membuat Dockerfile untuk React dengan Vite
-
-Buat file Dockerfile di dalam folder frontend/my-react-app dengan isi berikut:
-
-```
-# frontend/my-react-app/Dockerfile
-FROM node:14-alpine
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm install
-
-COPY . .
-
-# Build untuk production menggunakan Vite
-RUN npm run build
-
-# Gunakan Nginx untuk serve static file
-FROM nginx:stable-alpine
-COPY --from=0 /app/dist /usr/share/nginx/html
-
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
-```
-
-#### 3. Build dan Jalankan Docker Container untuk Frontend
-
-```
-cd frontend/my-react-app
-npm run build
-docker build -t react-frontend-vite:1.0 .
-docker run -d -p 3000:80 --name react-container-vite react-frontend-vite:1.0
-```
-
-#### 4. Verifikasi di Browser
-
-Buka browser ke http://localhost:3000 untuk memastikan aplikasi React Vite berjalan.
-
-### 🔍 Menguji API dengan Postman
-
-
-#### 1. Menjalankan POST Request (Menambah data baru)
-
-- URL: http://127.0.0.1:5000/api/items
-- Method: POST
-- Headers: Content-Type: application/json
-- Body (JSON):
-
-```
-{
-  "name": "Item 1",
-  "description": "Description Item 1"
+  return (
+    <div>
+      <h1>React & Flask Integration</h1>
+      <ul>
+        {items.map((item) => (
+          <li key={item.id}>
+            <strong>{item.name}</strong>: {item.description}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
+
+export default App;
 ```
 
-- Response :
+#### 5️⃣ Menjalankan Docker Compose
 
-``` 
-{
-    "description": "Description Item 1",
-    "id": 1,
-    "name": "Item 1"
-}
-```
-
-#### 2. Menjalankan GET Request (Membaca data)
-
-- URL: http://127.0.0.1:5000/api/items
-- Method: GET
-- Response:
+Jalankan perintah berikut untuk membangun ulang image dan menjalankan semua container:
 
 ```
-[
-    {
-        "description": "Description Item 1",
-        "id": 1,
-        "name": "Item 1"
-    }
-]
+docker compose up -d --build
 ```
 
-Ulangi langkah di atas untuk menguji fitur CRUD lainnya seperti Update dan Delete.
+Untuk melihat log:
 
-### ✅ Selesai!
+```
+docker compose logs -f
+```
 
-Sekarang Anda telah berhasil menjalankan proyek Flask dengan PostgreSQL, React dengan Vite, serta menggunakan Docker untuk mengemas backend dan frontend dalam container! 🚀
+
+#### 6️⃣ Verifikasi Integrasi
+
+- Buka http://localhost:3000 untuk melihat UI React.
+- Backend (Flask) bisa dicek di http://localhost:5000/api/items.
+- Pastikan React dapat mengambil data dari Flask dan Flask dapat menyimpan data ke PostgreSQL.
+
+### ✅ Kesimpulan
+Proyek ini telah mengintegrasikan Flask, React, dan PostgreSQL menggunakan Docker Compose. Dengan pendekatan ini, semua layanan dapat dikelola secara lebih efisien dalam satu lingkungan pengembangan. 🚀
