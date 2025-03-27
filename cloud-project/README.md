@@ -537,16 +537,16 @@ docker run -d -p 3000:80 --name react-container-vite react-frontend-vite:1.0
 ### Verifikasi di Browser
 Terakhir, kami memastikan aplikasi berjalan dengan membuka [http://localhost:3000](http://localhost:3000) di browser.
 
-**Pekan 8 – Integrasi Full Stack dengan Docker Compose (Review & Latihan Mandiri)**
+# Pekan 8 – Integrasi Full Stack dengan Docker Compose (Review & Latihan Mandiri)**
 
-1. **Deskripsi Singkat**
+## 1.Deskripsi Singkat
 Di pekan ini, akhirnya semua komponen (Flask, React, PostgreSQL) bisa terintegrasi dalam satu file `docker-compose.yml`. Dengan cara ini, orkestrasi menjadi jauh lebih mudah karena semua layanan bisa dijalankan bersamaan tanpa perlu konfigurasi manual yang ribet.
 
-2. **Tujuan Pembelajaran**
+## 2. Tujuan Pembelajaran
 - Mampu membuat `docker-compose.yml` yang mengorkestrasi beberapa container.
 - Melakukan review dan latihan mandiri sebagai persiapan proyek.
 
-3. **Langkah-Langkah Praktikum**
+## 3. Langkah-Langkah Praktikum
 
 ### **Membuat `docker-compose.yml`**
 Kami membuat file `docker-compose.yml` di dalam folder `cloud-project` dengan isi berikut:
