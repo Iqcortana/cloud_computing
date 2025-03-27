@@ -537,7 +537,200 @@ docker run -d -p 3000:80 --name react-container-vite react-frontend-vite:1.0
 ### Verifikasi di Browser
 Terakhir, kami memastikan aplikasi berjalan dengan membuka [http://localhost:3000](http://localhost:3000) di browser.
 
+**Pekan 8 – Integrasi Full Stack dengan Docker Compose (Review & Latihan Mandiri)**
 
+1. **Deskripsi Singkat**
+Di pekan ini, akhirnya semua komponen (Flask, React, PostgreSQL) bisa terintegrasi dalam satu file `docker-compose.yml`. Dengan cara ini, orkestrasi menjadi jauh lebih mudah karena semua layanan bisa dijalankan bersamaan tanpa perlu konfigurasi manual yang ribet.
+
+2. **Tujuan Pembelajaran**
+- Mampu membuat `docker-compose.yml` yang mengorkestrasi beberapa container.
+- Melakukan review dan latihan mandiri sebagai persiapan proyek.
+
+3. **Langkah-Langkah Praktikum**
+
+### **Membuat `docker-compose.yml`**
+Kami membuat file `docker-compose.yml` di dalam folder `cloud-project` dengan isi berikut:
+
+```yaml
+version: '3.7'
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: flask_container
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_NAME=test_db
+      - DB_USER=student
+      - DB_PASSWORD=password
+
+  frontend:
+    build:
+      context: ./frontend/my-react-app
+    container_name: react_container
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  db:
+    image: postgres:12-alpine
+    container_name: postgres_container
+    environment:
+      - POSTGRES_DB=test_db
+      - POSTGRES_USER=student
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  db_data:
+```
+
+### **Membuat File `init.sql`**
+Kami menambahkan file `init.sql` untuk inisialisasi database dengan data awal:
+
+```sql
+CREATE TABLE IF NOT EXISTS items (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT
+);
+
+INSERT INTO items (name, description) VALUES
+('Test Item', 'This is a test description'),
+('Test Item 2', 'This is a test description 2');
+```
+
+Setelah database berjalan, tabel `items` sudah memiliki data awal.
+
+### **Menyesuaikan `app.py`**
+Agar koneksi ke database bisa lebih fleksibel, kami menggunakan environment variable:
+
+```python
+import os
+import psycopg2
+from flask import Flask, jsonify, request
+
+# Koneksi ke database PostgreSQL
+def get_db_connection():
+    conn = psycopg2.connect(
+        host=os.environ.get("DB_HOST", "localhost"),
+        database=os.environ.get("DB_NAME", "test_db"),
+        user=os.environ.get("DB_USER", "student"),
+        password=os.environ.get("DB_PASSWORD", "password")
+    )
+    return conn
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return jsonify({"message": "Hello from Flask!"})
+
+@app.route('/api/items', methods=['GET'])
+def get_items():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name, description FROM items;")
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    
+    items = [{"id": row[0], "name": row[1], "description": row[2]} for row in rows]
+    return jsonify(items)
+
+@app.route('/api/items', methods=['POST'])
+def create_item():
+    data = request.json
+    name = data['name']
+    description = data['description']
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO items (name, description) VALUES (%s, %s) RETURNING id;", (name, description))
+    new_id = cur.fetchone()[0]
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify({"id": new_id, "name": name, "description": description}), 201
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)
+```
+
+### **Menyesuaikan `App.jsx` (Frontend)**
+Di sisi React, kami memastikan bahwa data dari backend bisa diambil dan ditampilkan dengan benar:
+
+```jsx
+import { useState, useEffect } from "react";
+
+function App() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/items")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        setItems(data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return <div>Loading data...</div>;
+  }
+
+  return (
+    <div>
+      <h1>React & Flask Integration</h1>
+      <ul>
+        {items.map((item) => (
+          <li key={item.id}>
+            <strong>{item.name}</strong>: {item.description}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default App;
+```
+
+### **Menjalankan Docker Compose**
+Akhirnya, semua container bisa dijalankan dengan satu perintah saja:
+
+```sh
+docker compose up -d --build
+```
+
+Jika ingin melihat log secara langsung:
+
+```sh
+docker compose logs -f
+```
+
+### **Verifikasi Integrasi**
+Kami membuka **http://localhost:3000** di browser dan berhasil melihat data dari PostgreSQL yang ditampilkan di React. Ini membuktikan bahwa integrasi full stack dengan Docker Compose telah berjalan dengan baik!
 
 ### ✅ Selesai!
 
